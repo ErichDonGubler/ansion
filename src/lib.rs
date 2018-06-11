@@ -266,4 +266,6 @@ pub enum AnsiCsiEscape {
     CursorPosition(u16, u16),
     SaveCursorPosition,
     RestoreCursorPosition,
+    ScrollUp(u16),
+    ScrollDown(u16),
 }
