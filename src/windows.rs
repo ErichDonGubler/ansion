@@ -8,8 +8,10 @@ use {
         stdout,
     },
     winapi::{
-        ctypes::c_void,
-        shared::minwindef::DWORD,
+        shared::{
+            minwindef::DWORD,
+            ntdef::HANDLE,
+        },
         um::{
             consoleapi::{
                 GetConsoleMode,
@@ -51,10 +53,10 @@ impl WindowsAnsiTerminal {
         let stdout = StdOutputHandle::new().unwrap().map_err(Stdout)?;
 
         let mut t = WindowsAnsiTerminal { stdin, stdout };
-        t.stdout
-            .0
-            .set_flags(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-            .map_err(TerminalModeSetError::Stdout)?;
+        if let StreamHandle::Console(out) = &mut t.stdout.0 {
+            out.set_flags(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+                .map_err(TerminalModeSetError::Stdout)?;
+        }
         Ok(t)
     }
 }
@@ -99,35 +101,26 @@ impl AnsiTerminal for WindowsAnsiTerminal {
         map_option!(stdout_flags, processed_output, ENABLE_PROCESSED_OUTPUT);
         map_option!(stdout_flags, wrap_at_eol_output, ENABLE_WRAP_AT_EOL_OUTPUT);
 
-        self.stdin.0.set_flags(stdin_flags).map_err(Stdin)?;
-        self.stdout.0.set_flags(stdout_flags).map_err(Stdout)?;
+        use StreamHandle::*;
+
+        if let Console(c) = &mut self.stdin.0 {
+            c.set_flags(stdin_flags).map_err(Stdin)?;
+        }
+        if let Console(c) = &mut self.stdout.0 {
+            c.set_flags(stdout_flags).map_err(Stdout)?;
+        }
         Ok(())
     }
 }
 
 #[derive(Debug)]
 pub struct ConsoleHandle {
-    handle: *mut c_void,
+    handle: HANDLE,
     state_to_restore: DWORD,
     state: DWORD,
 }
 
 impl ConsoleHandle {
-    unsafe fn from_std_stream(std_handle: DWORD) -> Result<ConsoleHandle, io::Error> {
-        let handle = GetStdHandle(std_handle);
-
-        let mut state_to_restore = 0;
-        if GetConsoleMode(handle, &mut state_to_restore as *mut DWORD) == 0 {
-            return Err(io::Error::last_os_error());
-        }
-
-        Ok(ConsoleHandle {
-            handle,
-            state_to_restore,
-            state: state_to_restore,
-        })
-    }
-
     fn set_flags(&mut self, flags: DWORD) -> io::Result<()> {
         self.state |= flags;
         match unsafe { SetConsoleMode(self.handle, self.state) } {
@@ -140,18 +133,45 @@ impl ConsoleHandle {
 impl Drop for ConsoleHandle {
     fn drop(&mut self) {
         if unsafe { SetConsoleMode(self.handle, self.state_to_restore) } == 0 {
-            warn!("could not reset console state");
+            warn!("could not reset console state: {}", io::Error::last_os_error());
         }
     }
 }
 
 #[derive(Debug)]
-pub struct StdInputHandle(ConsoleHandle);
+pub enum StreamHandle {
+    NonConsole {
+        handle: HANDLE,
+    },
+    Console(ConsoleHandle),
+}
+
+impl StreamHandle {
+    unsafe fn from_std_stream(std_handle: DWORD) -> Result<StreamHandle, io::Error> {
+        let handle = GetStdHandle(std_handle);
+
+        let mut state_to_restore = 0;
+        if GetConsoleMode(handle, &mut state_to_restore as *mut DWORD) == 0 {
+            // FIXME: We probably want to make sure that this is a certain error.
+            return Ok(StreamHandle::NonConsole { handle });
+            // return Err(io::Error::last_os_error());
+        }
+
+        Ok(StreamHandle::Console(ConsoleHandle {
+            handle,
+            state_to_restore,
+            state: state_to_restore,
+        }))
+    }
+}
+
+#[derive(Debug)]
+pub struct StdInputHandle(StreamHandle);
 
 impl StdInputHandle {
     pub fn new() -> Option<io::Result<Self>> {
         Some(Ok(StdInputHandle(unsafe {
-            match ConsoleHandle::from_std_stream(STD_INPUT_HANDLE) {
+            match StreamHandle::from_std_stream(STD_INPUT_HANDLE) {
                 Ok(ch) => ch,
                 Err(e) => return Some(Err(e)),
             }
@@ -160,12 +180,12 @@ impl StdInputHandle {
 }
 
 #[derive(Debug)]
-pub struct StdOutputHandle(ConsoleHandle);
+pub struct StdOutputHandle(StreamHandle);
 
 impl StdOutputHandle {
     pub fn new() -> Option<io::Result<Self>> {
         Some(Ok(StdOutputHandle(unsafe {
-            match ConsoleHandle::from_std_stream(STD_OUTPUT_HANDLE) {
+            match StreamHandle::from_std_stream(STD_OUTPUT_HANDLE) {
                 Ok(ch) => ch,
                 Err(e) => return Some(Err(e)),
             }
