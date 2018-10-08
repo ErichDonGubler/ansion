@@ -127,6 +127,21 @@ pub enum AnsiEscape {
     ScrollDown(u16),
     InsertLine(u16),
     DeleteLine(u16),
+    Color(AnsiColor),
+}
+
+pub enum AnsiColor {
+    Reset,
+    Black,
+    Blue,
+    Green,
+    Red,
+    Cyan,
+    Magenta,
+    Yellow,
+    White,
+    Ansi256(u8),
+    Rgb(u8, u8, u8),
 }
 
 /// Represents something that an `AnsiTerminal` can use to manipulate the standard out stream.
@@ -158,6 +173,32 @@ impl TerminalOutput for AnsiEscape {
             ScrollDown(x) => write_csi!("{}T"; x),
             InsertLine(x) => write_csi!("{}L"; x),
             DeleteLine(x) => write_csi!("{}M"; x),
+            Color(x) => TerminalOutput::fmt(x, f),
+        }
+    }
+}
+
+impl TerminalOutput for AnsiColor {
+    fn fmt(&self, f: &mut io::Write) -> io::Result<()> {
+        macro_rules! write_csi {
+            ($($e: expr),*; $($args: expr),*) => {
+                write!(f, csi!($($e),*) $(, $args)*)
+            }
+        }
+
+        use AnsiColor::*;
+        match self {
+            Reset => write_csi!("0m";),
+            Black => write_csi!("30m";),
+            Red => write_csi!("31m";),
+            Green => write_csi!("32m";),
+            Yellow => write_csi!("33m";),
+            Blue => write_csi!("34m";),
+            Magenta => write_csi!("35m";),
+            Cyan => write_csi!("36m";),
+            White => write_csi!("37m";),
+            Ansi256(x) => write_csi!("48;5;{}m"; x),
+            Rgb(r, g, b) => write_csi!("38;2;{};{};{}m"; r, g, b),
         }
     }
 }
@@ -192,6 +233,13 @@ macro_rules! out {
     };
     (@args $t: expr; $escape: ident { $($args: tt)* }) => {
         $t.write(&$escape { $($args)* })?;
+    };
+    (@args $t: expr; $escape: ident) => {
+        $t.write(&$escape)?;
+    };
+    (@args $t: expr; $escape: ident, $($tail: tt)*) => {
+        $t.write(&$escape)?;
+        out!(@args $t; $($tail)*);
     };
     (@args $t: expr;) => {};
     ($t: expr, $($tail: tt)*) => {

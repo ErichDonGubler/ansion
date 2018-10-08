@@ -1,5 +1,12 @@
 use {
-    std::io,
+    super::{
+        AnsiColor,
+        TerminalOutput,
+    },
+    std::io::{
+        self,
+        stdout,
+    },
     winapi::{
         ctypes::c_void,
         shared::minwindef::DWORD,
@@ -49,6 +56,12 @@ impl WindowsAnsiTerminal {
             .set_flags(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
             .map_err(TerminalModeSetError::Stdout)?;
         Ok(t)
+    }
+}
+
+impl Drop for WindowsAnsiTerminal {
+    fn drop(&mut self) {
+        let _ = AnsiColor::Reset.fmt(&mut stdout());
     }
 }
 
