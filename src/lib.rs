@@ -13,6 +13,8 @@ use std::{
     },
 };
 
+mod macros;
+
 #[cfg(windows)]
 pub mod windows;
 #[cfg(windows)]
@@ -105,16 +107,6 @@ pub enum TerminalModeSetError {
     Stdin(io::Error),
     #[fail(display = "unable to set flags on stdout: {}", _0)]
     Stdout(io::Error),
-}
-
-macro_rules! ansi {
-    ($($l:expr),*) => { concat!("\x1B", $($l),*) };
-}
-
-/// Shamelessly stolen from the Termion codebase. :)
-/// See here: https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_sequences
-macro_rules! csi {
-    ($($l:expr),*) => { ansi!("[", $($l),*) };
 }
 
 /// Represents the full set of ANSI escapes that are supported cross-platform by this library.
