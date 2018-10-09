@@ -3,13 +3,7 @@ extern crate ansion;
 extern crate failure;
 
 use {
-    ansion::{
-        ansi_terminal,
-        AnsiColor,
-        AnsiEscape,
-        AnsiTerminal,
-        TerminalModeOptions,
-    },
+    ansion::prelude::*,
     failure::Error,
     std::{
         thread::sleep,
@@ -18,24 +12,34 @@ use {
 };
 
 fn main() -> Result<(), Error> {
-    use AnsiEscape::*;
-    use AnsiColor::*;
     let mut t = ansi_terminal()?;
     t.set_mode(TerminalModeOptions::raw())?;
-    out!(
-        t,
+    out!(t,
+        SwitchToAlternateScreenBuffer,
+        Hide,
         ("\n\n\n"),
-        CursorUp(3),
+        PreviousLine(3),
+
         Rgb(255, 0, 0),
-        ("Hay sup!\r\n"),
-        White,
-        ("Does this work?\r\n"),
+        Underline,
+            ("Hay sup!"),
+        NextLine(1),
+        Reset,
+
+        Magenta,
+        Negative,
+            ("Does this work?\r\n"),
+        Positive,
+        NextLine(1),
+        Reset,
     );
-    sleep(Duration::from_millis(1000));
-    out!(
-        t,
+    sleep(Duration::from_millis(3000));
+    out!(t,
+        SwitchToMainScreenBuffer,
+        Show,
         Green,
-        ("Looks like it!"),
+            ("Looks like it!"),
+        Reset,
     );
 
     Ok(())

@@ -16,6 +16,9 @@ use std::{
 #[macro_use]
 mod macros;
 
+pub mod escapes;
+pub mod prelude;
+
 #[cfg(windows)]
 pub mod windows;
 #[cfg(windows)]
@@ -110,98 +113,9 @@ pub enum TerminalModeSetError {
     Stdout(io::Error),
 }
 
-/// Represents the full set of ANSI escapes that are supported cross-platform by this library.
-/// For more information for your platform, please see:
-/// * Windows: https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
-pub enum AnsiEscape {
-    CursorUp(u16),
-    CursorDown(u16),
-    CursorForward(u16),
-    CursorBack(u16),
-    CursorNextLine(u16),
-    CursorPreviousLine(u16),
-    CursorHorizontalAbsolute(u16),
-    CursorPosition(u16, u16),
-    SaveCursorPosition,
-    RestoreCursorPosition,
-    ScrollUp(u16),
-    ScrollDown(u16),
-    InsertLine(u16),
-    DeleteLine(u16),
-    Color(AnsiColor),
-}
-
-pub enum AnsiColor {
-    Reset,
-    Black,
-    Blue,
-    Green,
-    Red,
-    Cyan,
-    Magenta,
-    Yellow,
-    White,
-    Ansi256(u8),
-    Rgb(u8, u8, u8),
-}
-
 /// Represents something that an `AnsiTerminal` can use to manipulate the standard out stream.
 pub trait TerminalOutput {
     fn fmt(&self, f: &mut io::Write) -> io::Result<()>;
-}
-
-impl TerminalOutput for AnsiEscape {
-    fn fmt(&self, f: &mut io::Write) -> io::Result<()> {
-        macro_rules! write_csi {
-            ($($e: expr),*; $($args: expr),*) => {
-                write!(f, csi!($($e),*) $(, $args)*)
-            }
-        }
-
-        use AnsiEscape::*;
-        match self {
-            CursorUp(x) => write_csi!("{}A"; x),
-            CursorDown(x) => write_csi!("{}B"; x),
-            CursorForward(x) => write_csi!("{}C"; x),
-            CursorBack(x) => write_csi!("{}D"; x),
-            CursorNextLine(x) => write_csi!("{}E"; x),
-            CursorPreviousLine(x) => write_csi!("{}F"; x),
-            CursorHorizontalAbsolute(x) => write_csi!("{}G"; x),
-            CursorPosition(x, y) => write_csi!("{};{}H"; x, y),
-            SaveCursorPosition => write_csi!("s";),
-            RestoreCursorPosition => write_csi!("u";),
-            ScrollUp(x) => write_csi!("{}S"; x),
-            ScrollDown(x) => write_csi!("{}T"; x),
-            InsertLine(x) => write_csi!("{}L"; x),
-            DeleteLine(x) => write_csi!("{}M"; x),
-            Color(x) => TerminalOutput::fmt(x, f),
-        }
-    }
-}
-
-impl TerminalOutput for AnsiColor {
-    fn fmt(&self, f: &mut io::Write) -> io::Result<()> {
-        macro_rules! write_csi {
-            ($($e: expr),*; $($args: expr),*) => {
-                write!(f, csi!($($e),*) $(, $args)*)
-            }
-        }
-
-        use AnsiColor::*;
-        match self {
-            Reset => write_csi!("0m";),
-            Black => write_csi!("30m";),
-            Red => write_csi!("31m";),
-            Green => write_csi!("32m";),
-            Yellow => write_csi!("33m";),
-            Blue => write_csi!("34m";),
-            Magenta => write_csi!("35m";),
-            Cyan => write_csi!("36m";),
-            White => write_csi!("37m";),
-            Ansi256(x) => write_csi!("48;5;{}m"; x),
-            Rgb(r, g, b) => write_csi!("38;2;{};{};{}m"; r, g, b),
-        }
-    }
 }
 
 impl<'a> TerminalOutput for fmt::Arguments<'a> {

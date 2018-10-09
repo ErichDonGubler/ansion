@@ -29,8 +29,8 @@ use {
             },
         },
     },
-    AnsiColor,
     AnsiTerminal,
+    escapes::formatting::SetGraphicsRenditionEscape,
     TerminalModeOptions,
     TerminalModeSetError,
     TerminalOutput,
@@ -61,7 +61,7 @@ impl WindowsAnsiTerminal {
 
 impl Drop for WindowsAnsiTerminal {
     fn drop(&mut self) {
-        let _ = AnsiColor::Reset.fmt(&mut stdout());
+        let _ = SetGraphicsRenditionEscape::Reset.fmt(&mut stdout());
     }
 }
 
