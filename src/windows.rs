@@ -1,8 +1,4 @@
 use {
-    super::{
-        AnsiColor,
-        TerminalOutput,
-    },
     std::io::{
         self,
         stdout,
@@ -33,9 +29,11 @@ use {
             },
         },
     },
+    AnsiColor,
     AnsiTerminal,
     TerminalModeOptions,
     TerminalModeSetError,
+    TerminalOutput,
     TerminalSetupError,
 };
 

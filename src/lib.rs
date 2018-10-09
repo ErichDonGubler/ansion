@@ -13,6 +13,7 @@ use std::{
     },
 };
 
+#[macro_use]
 mod macros;
 
 #[cfg(windows)]
