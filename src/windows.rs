@@ -120,6 +120,7 @@ pub struct ConsoleHandle {
 
 impl ConsoleHandle {
     fn set_flags(&mut self, flags: DWORD) -> io::Result<()> {
+        // FIXME: Only commit this AFTER the change has been accepted.
         self.state |= flags;
         match unsafe { SetConsoleMode(self.handle, self.state) } {
             0 => Err(io::Error::last_os_error()),
