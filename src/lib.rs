@@ -2,6 +2,10 @@
 extern crate failure;
 #[macro_use]
 extern crate log;
+#[cfg(unix)]
+extern crate termios;
+extern crate try_from;
+#[cfg(windows)]
 extern crate winapi;
 
 use std::{
@@ -22,9 +26,15 @@ pub mod prelude;
 #[cfg(windows)]
 pub mod windows;
 #[cfg(windows)]
-use windows::*;
+use windows::WindowsAnsiTerminal;
 
-/// Represents the terminal as a resource and all valid operations that can be used with it.
+#[cfg(unix)]
+pub mod unix;
+#[cfg(unix)]
+use unix::UnixAnsiTerminal;
+
+/// Represents the terminal as a resource and all
+/// valid operations that can be used with it.
 pub trait AnsiTerminal {
     fn set_mode(&mut self, options: TerminalModeOptions) -> Result<(), TerminalModeSetError>;
 
@@ -49,7 +59,9 @@ pub fn ansi_terminal_with_config(
 ) -> Result<impl AnsiTerminal, TerminalSetupError> {
     {
         #[cfg(windows)]
-        WindowsAnsiTerminal::new()
+        { WindowsAnsiTerminal::new() }
+        #[cfg(unix)]
+        { UnixAnsiTerminal::new() }
     }.and_then(|mut t| {
         t.set_mode(options)?;
         Ok(t)

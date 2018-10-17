@@ -7,6 +7,10 @@ authors = ["Erich Gubler <erichdongubler@gmail.com>"]
 failure = "0.1.1"
 log = "0.4.2"
 
+[target.'cfg(not(windows))'.dependencies]
+termios = "0.3.0"
+try_from = "0.2.2"
+
 [target.'cfg(windows)'.dependencies.winapi]
 version = "0.3.5"
 features = ["consoleapi", "minwindef", "processenv", "winbase", "wincon", "winnt"]
