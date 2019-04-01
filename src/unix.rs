@@ -1,28 +1,13 @@
 use {
-    AnsiTerminal,
-    TerminalChannelMode,
-    TerminalModeOptions,
-    TerminalModeSetError,
-    TerminalOutput,
-    TerminalSetupError,
-    escapes::formatting::SetGraphicsRenditionEscape,
+    crate::{
+        escapes::formatting::SetGraphicsRenditionEscape, AnsiTerminal, TerminalChannelMode,
+        TerminalModeOptions, TerminalModeSetError, TerminalOutput, TerminalSetupError,
+    },
     std::{
-        io::{
-            self,
-            stdin,
-            stdout,
-        },
-        os::unix::io::{
-            AsRawFd,
-            RawFd,
-        },
+        io::{self, stdin, stdout},
+        os::unix::io::{AsRawFd, RawFd},
     },
-    termios::{
-        cfmakeraw,
-        tcsetattr,
-        Termios,
-        TCSANOW,
-    },
+    termios::{cfmakeraw, tcsetattr, Termios, TCSANOW},
     try_from::TryFrom,
 };
 
@@ -105,10 +90,7 @@ impl UnixAnsiTerminal {
 
 impl AnsiTerminal for UnixAnsiTerminal {
     fn set_mode(&mut self, options: TerminalModeOptions) -> Result<(), TerminalModeSetError> {
-        use self::{
-            Stream::*,
-            TerminalModeSetError::*,
-        };
+        use self::{Stream::*, TerminalModeSetError::*};
 
         let TerminalModeOptions {
             stdin: stdin_mode,

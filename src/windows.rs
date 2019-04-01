@@ -1,40 +1,20 @@
 use {
-    std::io::{
-        self,
-        stdout,
-    },
-    winapi::{
-        shared::{
-            minwindef::DWORD,
-            ntdef::HANDLE,
-        },
-        um::{
-            consoleapi::{
-                GetConsoleMode,
-                SetConsoleMode,
-            },
-            processenv::GetStdHandle,
-            winbase::{
-                STD_INPUT_HANDLE,
-                STD_OUTPUT_HANDLE,
-            },
-            wincon::{
-                DISABLE_NEWLINE_AUTO_RETURN,
-                ENABLE_ECHO_INPUT,
-                ENABLE_LINE_INPUT,
-                ENABLE_PROCESSED_INPUT,
-                ENABLE_PROCESSED_OUTPUT,
-                ENABLE_VIRTUAL_TERMINAL_PROCESSING,
-                ENABLE_WRAP_AT_EOL_OUTPUT,
-            },
-        },
-    },
-    AnsiTerminal,
     escapes::formatting::SetGraphicsRenditionEscape,
-    TerminalModeOptions,
-    TerminalModeSetError,
-    TerminalOutput,
-    TerminalSetupError,
+    std::io::{self, stdout},
+    winapi::{
+        shared::{minwindef::DWORD, ntdef::HANDLE},
+        um::{
+            consoleapi::{GetConsoleMode, SetConsoleMode},
+            processenv::GetStdHandle,
+            winbase::{STD_INPUT_HANDLE, STD_OUTPUT_HANDLE},
+            wincon::{
+                DISABLE_NEWLINE_AUTO_RETURN, ENABLE_ECHO_INPUT, ENABLE_LINE_INPUT,
+                ENABLE_PROCESSED_INPUT, ENABLE_PROCESSED_OUTPUT,
+                ENABLE_VIRTUAL_TERMINAL_PROCESSING, ENABLE_WRAP_AT_EOL_OUTPUT,
+            },
+        },
+    },
+    AnsiTerminal, TerminalModeOptions, TerminalModeSetError, TerminalOutput, TerminalSetupError,
 };
 
 #[derive(Debug)]
@@ -132,16 +112,17 @@ impl ConsoleHandle {
 impl Drop for ConsoleHandle {
     fn drop(&mut self) {
         if unsafe { SetConsoleMode(self.handle, self.state_to_restore) } == 0 {
-            warn!("could not reset console state: {}", io::Error::last_os_error());
+            warn!(
+                "could not reset console state: {}",
+                io::Error::last_os_error()
+            );
         }
     }
 }
 
 #[derive(Debug)]
 pub enum StreamHandle {
-    NonConsole {
-        handle: HANDLE,
-    },
+    NonConsole { handle: HANDLE },
     Console(ConsoleHandle),
 }
 

@@ -1,7 +1,4 @@
-use {
-    std::io,
-    TerminalOutput,
-};
+use {crate::TerminalOutput, std::io};
 
 #[derive(Clone, Debug)]
 pub enum SetGraphicsRenditionEscape {
@@ -52,7 +49,9 @@ pub enum SetGraphicsRenditionEscape {
 impl TerminalOutput for SetGraphicsRenditionEscape {
     fn fmt(&self, f: &mut io::Write) -> io::Result<()> {
         macro_rules! w {
-            ($code: expr) => { write!(f, csi!("{}m"), $code) };
+            ($code: expr) => {
+                write!(f, csi!("{}m"), $code)
+            };
         }
         use self::SetGraphicsRenditionEscape::*;
         match self {
@@ -74,7 +73,7 @@ impl TerminalOutput for SetGraphicsRenditionEscape {
                 write!(f, csi!("38;"))?;
                 e.write_color_code(f)?;
                 write!(f, "m")
-            },
+            }
             ForegroundDefault => w!(39),
             BackgroundBlack => w!(40),
             BackgroundRed => w!(41),
@@ -88,7 +87,7 @@ impl TerminalOutput for SetGraphicsRenditionEscape {
                 write!(f, csi!("48;"))?;
                 e.write_color_code(f)?;
                 write!(f, "m")
-            },
+            }
             BackgroundDefault => w!(49),
             BrightForegroundBlack => w!(90),
             BrightForegroundRed => w!(91),
@@ -160,7 +159,10 @@ impl ExtendedColor {
 
 impl TerminalOutput for ExtendedColor {
     fn fmt(&self, f: &mut io::Write) -> io::Result<()> {
-        TerminalOutput::fmt(&SetGraphicsRenditionEscape::ForegroundExtended(self.clone()), f)
+        TerminalOutput::fmt(
+            &SetGraphicsRenditionEscape::ForegroundExtended(self.clone()),
+            f,
+        )
     }
 }
 
@@ -179,21 +181,21 @@ pub enum PresetColor {
 
 impl TerminalOutput for PresetColor {
     fn fmt(&self, f: &mut io::Write) -> io::Result<()> {
-        use self::{
-            PresetColor::*,
-            SetGraphicsRenditionEscape::*,
-        };
-        TerminalOutput::fmt(&match self {
-            DefaultColor => ForegroundDefault,
-            Black => ForegroundBlack,
-            Blue => ForegroundBlue,
-            Green => ForegroundGreen,
-            Red => ForegroundRed,
-            Cyan => ForegroundCyan,
-            Magenta => ForegroundMagenta,
-            Yellow => ForegroundYellow,
-            White => ForegroundWhite,
-        }, f)
+        use self::{PresetColor::*, SetGraphicsRenditionEscape::*};
+        TerminalOutput::fmt(
+            &match self {
+                DefaultColor => ForegroundDefault,
+                Black => ForegroundBlack,
+                Blue => ForegroundBlue,
+                Green => ForegroundGreen,
+                Red => ForegroundRed,
+                Cyan => ForegroundCyan,
+                Magenta => ForegroundMagenta,
+                Yellow => ForegroundYellow,
+                White => ForegroundWhite,
+            },
+            f,
+        )
     }
 }
 
@@ -205,40 +207,40 @@ pub struct PresetColorSpec {
 
 impl TerminalOutput for PresetColorSpec {
     fn fmt(&self, f: &mut io::Write) -> io::Result<()> {
-        use self::{
-            PresetColor::*,
-            SetGraphicsRenditionEscape::*,
-        };
-        TerminalOutput::fmt(&match self {
-            PresetColorSpec {
-                color,
-                bright: false,
-            } => match color {
-                DefaultColor => ForegroundDefault,
-                Black => ForegroundBlack,
-                Blue => ForegroundBlue,
-                Green => ForegroundGreen,
-                Red => ForegroundRed,
-                Cyan => ForegroundCyan,
-                Magenta => ForegroundMagenta,
-                Yellow => ForegroundYellow,
-                White => ForegroundWhite,
-            }
-            PresetColorSpec {
-                color,
-                bright: true,
-            } => match color {
-                DefaultColor => ForegroundDefault,
-                Black => BrightForegroundBlack,
-                Blue => BrightForegroundBlue,
-                Green => BrightForegroundGreen,
-                Red => BrightForegroundRed,
-                Cyan => BrightForegroundCyan,
-                Magenta => BrightForegroundMagenta,
-                Yellow => BrightForegroundYellow,
-                White => BrightForegroundWhite,
-            }
-        }, f)
+        use self::{PresetColor::*, SetGraphicsRenditionEscape::*};
+        TerminalOutput::fmt(
+            &match self {
+                PresetColorSpec {
+                    color,
+                    bright: false,
+                } => match color {
+                    DefaultColor => ForegroundDefault,
+                    Black => ForegroundBlack,
+                    Blue => ForegroundBlue,
+                    Green => ForegroundGreen,
+                    Red => ForegroundRed,
+                    Cyan => ForegroundCyan,
+                    Magenta => ForegroundMagenta,
+                    Yellow => ForegroundYellow,
+                    White => ForegroundWhite,
+                },
+                PresetColorSpec {
+                    color,
+                    bright: true,
+                } => match color {
+                    DefaultColor => ForegroundDefault,
+                    Black => BrightForegroundBlack,
+                    Blue => BrightForegroundBlue,
+                    Green => BrightForegroundGreen,
+                    Red => BrightForegroundRed,
+                    Cyan => BrightForegroundCyan,
+                    Magenta => BrightForegroundMagenta,
+                    Yellow => BrightForegroundYellow,
+                    White => BrightForegroundWhite,
+                },
+            },
+            f,
+        )
     }
 }
 
@@ -271,14 +273,20 @@ impl TerminalOutput for Style {
             underline,
             negative,
         } = self;
-        TerminalOutput::fmt(&match underline {
-            true => Underline,
-            false => NoUnderline,
-        }, f)?;
-        TerminalOutput::fmt(&match negative {
-            true => Negative,
-            false => Positive,
-        }, f)?;
+        TerminalOutput::fmt(
+            &match underline {
+                true => Underline,
+                false => NoUnderline,
+            },
+            f,
+        )?;
+        TerminalOutput::fmt(
+            &match negative {
+                true => Negative,
+                false => Positive,
+            },
+            f,
+        )?;
         Ok(())
     }
 }
@@ -302,45 +310,43 @@ impl TerminalOutput for FontSpec {
 
         TerminalOutput::fmt(style, f)?;
         TerminalOutput::fmt(foreground_color, f)?;
-        use self::{
-            ColorSpec::*,
-            PresetColor::*,
-            SetGraphicsRenditionEscape::*,
-        };
-        TerminalOutput::fmt(&match background_color {
-            Preset(p) => match p {
-                PresetColorSpec {
-                    color,
-                    bright: false,
-                } => match color {
-                    DefaultColor => BackgroundDefault,
-                    Black => BackgroundBlack,
-                    Blue => BackgroundBlue,
-                    Green => BackgroundGreen,
-                    Red => BackgroundRed,
-                    Cyan => BackgroundCyan,
-                    Magenta => BackgroundMagenta,
-                    Yellow => BackgroundYellow,
-                    White => BackgroundWhite,
-                }
-                PresetColorSpec {
-                    color,
-                    bright: true,
-                } => match color {
-                    DefaultColor => BackgroundDefault,
-                    Black => BrightBackgroundBlack,
-                    Blue => BrightBackgroundBlue,
-                    Green => BrightBackgroundGreen,
-                    Red => BrightBackgroundRed,
-                    Cyan => BrightBackgroundCyan,
-                    Magenta => BrightBackgroundMagenta,
-                    Yellow => BrightBackgroundYellow,
-                    White => BrightBackgroundWhite,
-                }
+        use self::{ColorSpec::*, PresetColor::*, SetGraphicsRenditionEscape::*};
+        TerminalOutput::fmt(
+            &match background_color {
+                Preset(p) => match p {
+                    PresetColorSpec {
+                        color,
+                        bright: false,
+                    } => match color {
+                        DefaultColor => BackgroundDefault,
+                        Black => BackgroundBlack,
+                        Blue => BackgroundBlue,
+                        Green => BackgroundGreen,
+                        Red => BackgroundRed,
+                        Cyan => BackgroundCyan,
+                        Magenta => BackgroundMagenta,
+                        Yellow => BackgroundYellow,
+                        White => BackgroundWhite,
+                    },
+                    PresetColorSpec {
+                        color,
+                        bright: true,
+                    } => match color {
+                        DefaultColor => BackgroundDefault,
+                        Black => BrightBackgroundBlack,
+                        Blue => BrightBackgroundBlue,
+                        Green => BrightBackgroundGreen,
+                        Red => BrightBackgroundRed,
+                        Cyan => BrightBackgroundCyan,
+                        Magenta => BrightBackgroundMagenta,
+                        Yellow => BrightBackgroundYellow,
+                        White => BrightBackgroundWhite,
+                    },
+                },
+                Extended(e) => BackgroundExtended(e.clone()),
             },
-            Extended(e) => BackgroundExtended(e.clone()),
-        }, f)?;
+            f,
+        )?;
         Ok(())
     }
 }
-

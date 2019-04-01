@@ -1,7 +1,4 @@
-use {
-    std::io,
-    TerminalOutput,
-};
+use {crate::TerminalOutput, std::io};
 
 #[derive(Clone, Debug)]
 pub enum CursorEscape {

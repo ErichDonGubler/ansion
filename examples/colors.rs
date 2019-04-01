@@ -1,44 +1,37 @@
-#[macro_use]
-extern crate ansion;
-extern crate failure;
-
 use {
     ansion::prelude::*,
     failure::Error,
-    std::{
-        thread::sleep,
-        time::Duration,
-    },
+    std::{thread::sleep, time::Duration},
 };
 
 fn main() -> Result<(), Error> {
     let mut t = ansi_terminal()?;
     t.set_mode(TerminalModeOptions::raw())?;
-    out!(t,
+    out!(
+        t,
         SwitchToAlternateScreenBuffer,
         Hide,
         ("\n\n\n"),
         PreviousLine(3),
-
         Rgb(255, 0, 0),
         Underline,
-            ("Hay sup!"),
+        ("Hay sup!"),
         NextLine(1),
         Reset,
-
         Magenta,
         Negative,
-            ("Does this work?\r\n"),
+        ("Does this work?\r\n"),
         Positive,
         NextLine(1),
         Reset,
     );
     sleep(Duration::from_millis(3000));
-    out!(t,
+    out!(
+        t,
         SwitchToMainScreenBuffer,
         Show,
         Green,
-            ("Looks like it!"),
+        ("Looks like it!"),
         Reset,
     );
 

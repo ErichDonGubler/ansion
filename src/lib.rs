@@ -1,19 +1,10 @@
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate log;
-#[cfg(unix)]
-extern crate termios;
-extern crate try_from;
-#[cfg(windows)]
-extern crate winapi;
+#![deny(warnings)]
 
-use std::{
-    fmt,
-    io,
-    io::{
-        stdout,
-        Write,
+use {
+    failure::Fail,
+    std::{
+        fmt, io,
+        io::{stdout, Write},
     },
 };
 
@@ -26,12 +17,12 @@ pub mod prelude;
 #[cfg(windows)]
 pub mod windows;
 #[cfg(windows)]
-use windows::WindowsAnsiTerminal;
+use self::windows::WindowsAnsiTerminal;
 
 #[cfg(unix)]
 pub mod unix;
 #[cfg(unix)]
-use unix::UnixAnsiTerminal;
+use self::unix::UnixAnsiTerminal;
 
 /// Represents the terminal as a resource and all
 /// valid operations that can be used with it.
@@ -59,10 +50,15 @@ pub fn ansi_terminal_with_config(
 ) -> Result<impl AnsiTerminal, TerminalSetupError> {
     {
         #[cfg(windows)]
-        { WindowsAnsiTerminal::new() }
+        {
+            WindowsAnsiTerminal::new()
+        }
         #[cfg(unix)]
-        { UnixAnsiTerminal::new() }
-    }.and_then(|mut t| {
+        {
+            UnixAnsiTerminal::new()
+        }
+    }
+    .and_then(|mut t| {
         t.set_mode(options)?;
         Ok(t)
     })
@@ -100,7 +96,7 @@ pub struct TerminalModeOptions {
 
 impl TerminalModeOptions {
     pub fn cooked() -> Self {
-        use TerminalChannelMode::*;
+        use crate::TerminalChannelMode::*;
         TerminalModeOptions {
             stdin: Cooked,
             stdout: Cooked,
@@ -108,7 +104,7 @@ impl TerminalModeOptions {
     }
 
     pub fn raw() -> Self {
-        use TerminalChannelMode::*;
+        use crate::TerminalChannelMode::*;
         TerminalModeOptions {
             stdin: Raw,
             stdout: Raw,

@@ -2,12 +2,9 @@ pub mod cursor;
 pub mod formatting;
 
 use {
+    self::{cursor::CursorEscape, formatting::SetGraphicsRenditionEscape},
+    crate::TerminalOutput,
     std::io,
-    TerminalOutput,
-};
-use self::{
-    cursor::CursorEscape,
-    formatting::SetGraphicsRenditionEscape,
 };
 
 /// Represents the full set of ANSI escapes that are supported cross-platform by this library.
@@ -49,5 +46,3 @@ impl TerminalOutput for AnsiEscape {
         }
     }
 }
-
-
